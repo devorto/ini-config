@@ -1,0 +1,31 @@
+name: Check
+on: push
+jobs:
+  composer:
+    name: Composer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup
+        run: |
+          sudo update-alternatives --set php /usr/bin/php7.4
+          git clone -n https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git .
+          git checkout ${{ github.event.pull_request.head.sha }}
+      - name: Validate
+        run: composer validate
+      - name: Build
+        run: composer install --no-dev -o --ignore-platform-reqs --no-scripts
+  phpcs:
+    needs: [ composer ]
+    name: PHP Code Sniffer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup
+        run: |
+          sudo update-alternatives --set php /usr/bin/php7.4
+          git clone -n https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git .
+          git checkout ${{ github.event.pull_request.head.sha }}
+          composer install -o --ignore-platform-reqs --no-scripts
+          wget https://github.com/devorto/github-actions/releases/latest/download/github_actions.phar
+          chmod +x github_actions.phar
+      - name: Validate
+        run: ./github_actions.phar codesniffer
